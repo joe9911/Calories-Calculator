@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import "./index.css";
 
 const COLORS = {
-  bg: "#0b0b0f",
-  card: "#17171c",
-  border: "#2a2a33",
+  bg: "#0a0a0a",
+  card: "#161616",
+  border: "#262626",
   green: "#6abe30",
   blue: "#3b82f6",
   yellow: "#facc15",
+  red: "#ef4444",
   text: "#ffffff",
   muted: "#9ca3af",
 };
@@ -14,29 +16,38 @@ const COLORS = {
 const FOOD_DB = {
   proteins: [
     { name: "Chicken Breast", cal: 165 },
-    { name: "Egg Whites", cal: 17 },
+    { name: "Lean Beef", cal: 190 },
+    { name: "Egg White", cal: 17 },
     { name: "Tuna", cal: 200 },
+    { name: "Salmon", cal: 170 },
   ],
+
   carbs: [
     { name: "Rice", cal: 130 },
-    { name: "Banana", cal: 95 },
     { name: "Oats", cal: 380 },
+    { name: "Banana", cal: 95 },
+    { name: "Sweet Potato", cal: 90 },
+    { name: "Bread", cal: 75 },
   ],
+
   fats: [
     { name: "Olive Oil", cal: 45 },
-    { name: "Almonds", cal: 580 },
     { name: "Peanut Butter", cal: 600 },
+    { name: "Avocado", cal: 180 },
+    { name: "Almonds", cal: 580 },
+    { name: "Cheddar Cheese", cal: 400 },
   ],
 };
 
-function ProgressBar({ value, max, color }) {
+function Progress({ value, max, color }) {
   const percent = Math.min((value / max) * 100, 100);
 
   return (
     <div
       style={{
+        width: "100%",
         height: 10,
-        background: "#23232b",
+        background: "#222",
         borderRadius: 999,
         overflow: "hidden",
       }}
@@ -46,7 +57,6 @@ function ProgressBar({ value, max, color }) {
           width: `${percent}%`,
           height: "100%",
           background: color,
-          borderRadius: 999,
           transition: "0.3s",
         }}
       />
@@ -54,374 +64,543 @@ function ProgressBar({ value, max, color }) {
   );
 }
 
-function Card({ children }) {
-  return (
-    <div
-      style={{
-        background: COLORS.card,
-        border: `1px solid ${COLORS.border}`,
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 18,
-        boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-function MacroSection({ title, color, foods, onAdd, items }) {
+function FoodSection({
+  title,
+  foods,
+  items,
+  setItems,
+  color,
+}) {
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState(null);
-  const [qty, setQty] = useState(100);
 
   const filtered = foods.filter((f) =>
     f.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const addFood = () => {
-    if (!selected) return;
-
-    const calories = Math.round((selected.cal / 100) * qty);
-
-    onAdd({
-      name: selected.name,
-      qty,
-      cal: calories,
-    });
-
-    setSearch("");
-    setSelected(null);
-    setQty(100);
+  const addFood = (food) => {
+    setItems([
+      ...items,
+      {
+        name: food.name,
+        cal: food.cal,
+      },
+    ]);
   };
 
   return (
-    <Card>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 14,
-        }}
-      >
-        <h2 style={{ color, fontSize: 20 }}>{title}</h2>
-        <span style={{ color: COLORS.muted, fontSize: 14 }}>
-          {items.reduce((s, i) => s + i.cal, 0)} cal
-        </span>
-      </div>
-
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder={`Search ${title}`}
-        style={{
-          width: "100%",
-          padding: 14,
-          borderRadius: 14,
-          border: `1px solid ${COLORS.border}`,
-          background: "#101014",
-          color: COLORS.text,
-          marginBottom: 10,
-        }}
-      />
-
-      {search && (
-        <div
-          style={{
-            maxHeight: 160,
-            overflowY: "auto",
-            marginBottom: 10,
-          }}
-        >
-          {filtered.map((food, index) => (
-            <div
-              key={index}
-              onClick={() => {
-                setSelected(food);
-                setSearch(food.name);
-              }}
-              style={{
-                padding: 12,
-                borderRadius: 12,
-                background:
-                  selected?.name === food.name ? `${color}33` : "#101014",
-                marginBottom: 8,
-                cursor: "pointer",
-              }}
-            >
-              <div style={{ color: COLORS.text }}>{food.name}</div>
-              <div style={{ color: COLORS.muted, fontSize: 12 }}>
-                {food.cal} cal per 100g
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <input
-        type="number"
-        value={qty}
-        onChange={(e) => setQty(e.target.value)}
-        placeholder="Quantity"
-        style={{
-          width: "100%",
-          padding: 14,
-          borderRadius: 14,
-          border: `1px solid ${COLORS.border}`,
-          background: "#101014",
-          color: COLORS.text,
-          marginBottom: 12,
-        }}
-      />
-
-      <button
-        onClick={addFood}
-        style={{
-          width: "100%",
-          padding: 14,
-          borderRadius: 14,
-          border: "none",
-          background: color,
-          color: "white",
-          fontWeight: 700,
-          fontSize: 15,
-          cursor: "pointer",
-        }}
-      >
-        Add Food
-      </button>
-
-      {items.length > 0 && (
-        <div style={{ marginTop: 16 }}>
-          {items.map((item, index) => (
-            <div
-              key={index}
-              style={{
-                background: "#101014",
-                padding: 14,
-                borderRadius: 14,
-                marginBottom: 10,
-              }}
-            >
-              <div style={{ color: COLORS.text, fontWeight: 600 }}>
-                {item.name}
-              </div>
-              <div style={{ color: COLORS.muted, fontSize: 13 }}>
-                {item.qty}g • {item.cal} cal
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </Card>
-  );
-}
-
-export default function App() {
-  const [profile, setProfile] = useState(() => {
-    const saved = localStorage.getItem("profile");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          name: "",
-          calorieGoal: 2200,
-          waterGoal: 8,
-        };
-  });
-
-  const [log, setLog] = useState(() => {
-    const saved = localStorage.getItem("log");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          proteins: [],
-          carbs: [],
-          fats: [],
-        };
-  });
-
-  const [water, setWater] = useState(() => {
-    const saved = localStorage.getItem("water");
-    return saved ? JSON.parse(saved) : 0;
-  });
-
-  useEffect(() => {
-    localStorage.setItem("profile", JSON.stringify(profile));
-  }, [profile]);
-
-  useEffect(() => {
-    localStorage.setItem("log", JSON.stringify(log));
-  }, [log]);
-
-  useEffect(() => {
-    localStorage.setItem("water", JSON.stringify(water));
-  }, [water]);
-
-  const totalCalories = [
-    ...log.proteins,
-    ...log.carbs,
-    ...log.fats,
-  ].reduce((sum, item) => sum + item.cal, 0);
-
-  return (
     <div
+      className="card"
       style={{
-        minHeight: "100vh",
-        background: "linear-gradient(180deg,#0b0b0f,#111827)",
-        color: COLORS.text,
-        padding: 20,
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
+        padding: 18,
+        marginBottom: 18,
       }}
     >
       <div
         style={{
-          maxWidth: 480,
-          margin: "0 auto",
-          paddingBottom: 120,
+          fontSize: 20,
+          fontWeight: 800,
+          marginBottom: 16,
+          color,
         }}
       >
-        <div style={{ marginBottom: 22 }}>
-          <h1
-            style={{
-              fontSize: 34,
-              fontWeight: 900,
-              color: COLORS.green,
-              marginBottom: 6,
-            }}
-          >
-            Calories Tracker
-          </h1>
+        {title}
+      </div>
 
-          <p style={{ color: COLORS.muted }}>
-            Professional fitness tracker for iPhone
-          </p>
-        </div>
+      <input
+        placeholder="Search food..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={inputStyle}
+      />
 
-        <Card>
+      <div
+        style={{
+          marginTop: 14,
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
+      >
+        {filtered.map((food, index) => (
           <div
+            key={index}
             style={{
+              background: "#111",
+              borderRadius: 14,
+              padding: 14,
+              border: `1px solid ${COLORS.border}`,
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: 12,
             }}
           >
             <div>
-              <div style={{ color: COLORS.muted, marginBottom: 4 }}>
-                Daily Calories
-              </div>
-              <div style={{ fontSize: 42, fontWeight: 900 }}>
-                {totalCalories}
-              </div>
-            </div>
-
-            <div style={{ textAlign: "right" }}>
-              <div style={{ color: COLORS.muted }}>Goal</div>
-              <div style={{ fontSize: 22, fontWeight: 800 }}>
-                {profile.calorieGoal}
-              </div>
-            </div>
-          </div>
-
-          <ProgressBar
-            value={totalCalories}
-            max={profile.calorieGoal}
-            color={COLORS.green}
-          />
-        </Card>
-
-        <Card>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 14,
-            }}
-          >
-            <h2 style={{ fontSize: 20 }}>Water Intake</h2>
-            <span style={{ color: COLORS.blue, fontWeight: 700 }}>
-              {water}/{profile.waterGoal}
-            </span>
-          </div>
-
-          <ProgressBar
-            value={water}
-            max={profile.waterGoal}
-            color={COLORS.blue}
-          />
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4,1fr)",
-              gap: 10,
-              marginTop: 16,
-            }}
-          >
-            {Array.from({ length: profile.waterGoal }).map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setWater(index + 1)}
+              <div
                 style={{
-                  aspectRatio: 1,
-                  borderRadius: 16,
-                  border: "none",
-                  fontSize: 24,
-                  background: index < water ? "#1d4ed8" : "#1f2937",
-                  color: "white",
-                  cursor: "pointer",
+                  fontWeight: 700,
+                  marginBottom: 4,
                 }}
               >
-                💧
-              </button>
-            ))}
+                {food.name}
+              </div>
+
+              <div
+                style={{
+                  color: COLORS.muted,
+                  fontSize: 13,
+                }}
+              >
+                {food.cal} calories
+              </div>
+            </div>
+
+            <button
+              onClick={() => addFood(food)}
+              style={{
+                background: color,
+                border: "none",
+                borderRadius: 12,
+                padding: "10px 14px",
+                color: "#fff",
+                fontWeight: 700,
+              }}
+            >
+              Add
+            </button>
           </div>
-        </Card>
+        ))}
+      </div>
 
-        <MacroSection
-          title="Proteins"
-          color={COLORS.blue}
-          foods={FOOD_DB.proteins}
-          items={log.proteins}
-          onAdd={(item) =>
-            setLog((prev) => ({
-              ...prev,
-              proteins: [...prev.proteins, item],
-            }))
-          }
+      {items.length > 0 && (
+        <div
+          style={{
+            marginTop: 20,
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 800,
+              marginBottom: 12,
+            }}
+          >
+            Added Foods
+          </div>
+
+          {items.map((item, index) => (
+            <div
+              key={index}
+              style={{
+                background: "#0f0f0f",
+                padding: 12,
+                borderRadius: 12,
+                marginBottom: 10,
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <span>{item.name}</span>
+
+              <span
+                style={{
+                  color,
+                  fontWeight: 700,
+                }}
+              >
+                {item.cal} cal
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LoginScreen({ onLogin }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+
+  const createProfile = () => {
+    if (!name || !email) return;
+
+    const profiles =
+      JSON.parse(localStorage.getItem("profiles")) || [];
+
+    const existing = profiles.find(
+      (p) => p.email === email
+    );
+
+    if (existing) {
+      onLogin(existing);
+      return;
+    }
+
+    const profile = {
+      id: Date.now(),
+      name,
+      email,
+    };
+
+    profiles.push(profile);
+
+    localStorage.setItem(
+      "profiles",
+      JSON.stringify(profiles)
+    );
+
+    onLogin(profile);
+  };
+
+  return (
+    <div
+      className="app-container"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+      }}
+    >
+      <div
+        className="card"
+        style={{
+          width: "100%",
+          padding: 24,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 34,
+            fontWeight: 900,
+            color: COLORS.green,
+            marginBottom: 10,
+          }}
+        >
+          Calories Tracker
+        </div>
+
+        <div
+          style={{
+            color: COLORS.muted,
+            marginBottom: 24,
+          }}
+        >
+          Create profile or continue with email
+        </div>
+
+        <input
+          placeholder="Your Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          style={inputStyle}
         />
 
-        <MacroSection
-          title="Carbs"
-          color={COLORS.green}
-          foods={FOOD_DB.carbs}
-          items={log.carbs}
-          onAdd={(item) =>
-            setLog((prev) => ({
-              ...prev,
-              carbs: [...prev.carbs, item],
-            }))
-          }
+        <input
+          placeholder="Email Address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{
+            ...inputStyle,
+            marginTop: 14,
+          }}
         />
 
-        <MacroSection
-          title="Fats"
-          color={COLORS.yellow}
-          foods={FOOD_DB.fats}
-          items={log.fats}
-          onAdd={(item) =>
-            setLog((prev) => ({
-              ...prev,
-              fats: [...prev.fats, item],
-            }))
-          }
-        />
+        <button
+          onClick={createProfile}
+          style={{
+            width: "100%",
+            marginTop: 18,
+            background: COLORS.green,
+            border: "none",
+            borderRadius: 14,
+            padding: 16,
+            color: "#fff",
+            fontWeight: 800,
+            fontSize: 16,
+          }}
+        >
+          Continue
+        </button>
       </div>
     </div>
   );
 }
 
+function MacroCard({ title, value, goal, color }) {
+  return (
+    <div
+      className="card"
+      style={{
+        flex: 1,
+        padding: 16,
+      }}
+    >
+      <div
+        style={{
+          color,
+          fontWeight: 700,
+          marginBottom: 10,
+          fontSize: 13,
+        }}
+      >
+        {title}
+      </div>
+
+      <div
+        style={{
+          fontSize: 28,
+          fontWeight: 900,
+          marginBottom: 10,
+        }}
+      >
+        {value}
+      </div>
+
+      <Progress value={value} max={goal} color={color} />
+    </div>
+  );
+}
+
+const inputStyle = {
+  width: "100%",
+  background: "#111",
+  border: `1px solid ${COLORS.border}`,
+  borderRadius: 14,
+  padding: 14,
+  color: "#fff",
+  fontSize: 15,
+};
+
+export default function FoodTracker() {
+  const [profile, setProfile] = useState(null);
+
+  const [proteins, setProteins] = useState([]);
+  const [carbs, setCarbs] = useState([]);
+  const [fats, setFats] = useState([]);
+
+  // LOAD CURRENT USER
+  useEffect(() => {
+    const current = localStorage.getItem(
+      "current-profile"
+    );
+
+    if (current) {
+      setProfile(JSON.parse(current));
+    }
+  }, []);
+
+  // LOAD USER DATA
+  useEffect(() => {
+    if (!profile) return;
+
+    const saved = localStorage.getItem(
+      `food-data-${profile.email}`
+    );
+
+    if (saved) {
+      const data = JSON.parse(saved);
+
+      setProteins(data.proteins || []);
+      setCarbs(data.carbs || []);
+      setFats(data.fats || []);
+    }
+  }, [profile]);
+
+  // SAVE USER DATA
+  useEffect(() => {
+    if (!profile) return;
+
+    localStorage.setItem(
+      `food-data-${profile.email}`,
+      JSON.stringify({
+        proteins,
+        carbs,
+        fats,
+      })
+    );
+
+    localStorage.setItem(
+      "current-profile",
+      JSON.stringify(profile)
+    );
+  }, [proteins, carbs, fats, profile]);
+
+  if (!profile) {
+    return (
+      <LoginScreen
+        onLogin={(p) => {
+          setProfile(p);
+        }}
+      />
+    );
+  }
+
+  const proteinCalories = proteins.reduce(
+    (s, i) => s + i.cal,
+    0
+  );
+
+  const carbsCalories = carbs.reduce(
+    (s, i) => s + i.cal,
+    0
+  );
+
+  const fatsCalories = fats.reduce(
+    (s, i) => s + i.cal,
+    0
+  );
+
+  const totalCalories =
+    proteinCalories +
+    carbsCalories +
+    fatsCalories;
+
+  return (
+    <div className="app-container safe-area">
+      <div
+        style={{
+          padding: "50px 16px 120px",
+        }}
+      >
+        <div
+          style={{
+            marginBottom: 26,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: 34,
+                  fontWeight: 900,
+                  color: COLORS.green,
+                }}
+              >
+                Calories Tracker
+              </div>
+
+              <div
+                style={{
+                  color: COLORS.muted,
+                  marginTop: 6,
+                }}
+              >
+                Welcome {profile.name}
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                localStorage.removeItem(
+                  "current-profile"
+                );
+
+                window.location.reload();
+              }}
+              style={{
+                background: COLORS.red,
+                border: "none",
+                color: "#fff",
+                padding: "10px 14px",
+                borderRadius: 12,
+                fontWeight: 700,
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+
+        <div
+          className="card"
+          style={{
+            padding: 24,
+            marginBottom: 20,
+            background:
+              "linear-gradient(135deg,#6abe30,#4f8f22)",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 14,
+              color: "rgba(255,255,255,0.8)",
+              marginBottom: 8,
+              fontWeight: 700,
+            }}
+          >
+            TOTAL CALORIES
+          </div>
+
+          <div
+            style={{
+              fontSize: 54,
+              fontWeight: 900,
+              color: "#fff",
+            }}
+          >
+            {totalCalories}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
+          <MacroCard
+            title="Protein"
+            value={proteinCalories}
+            goal={600}
+            color={COLORS.blue}
+          />
+
+          <MacroCard
+            title="Carbs"
+            value={carbsCalories}
+            goal={1000}
+            color={COLORS.green}
+          />
+
+          <MacroCard
+            title="Fats"
+            value={fatsCalories}
+            goal={500}
+            color={COLORS.yellow}
+          />
+        </div>
+
+        <FoodSection
+          title="Proteins"
+          foods={FOOD_DB.proteins}
+          items={proteins}
+          setItems={setProteins}
+          color={COLORS.blue}
+        />
+
+        <FoodSection
+          title="Carbs"
+          foods={FOOD_DB.carbs}
+          items={carbs}
+          setItems={setCarbs}
+          color={COLORS.green}
+        />
+
+        <FoodSection
+          title="Fats"
+          foods={FOOD_DB.fats}
+          items={fats}
+          setItems={setFats}
+          color={COLORS.yellow}
+        />
+      </div>
+    </div>
+  );
+}
