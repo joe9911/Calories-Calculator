@@ -1,605 +1,176 @@
 import { useEffect, useState } from "react";
-import "./index.css";
 
-const COLORS = {
-  bg: "#0a0a0a",
-  card: "#161616",
-  border: "#262626",
-  green: "#6abe30",
-  blue: "#3b82f6",
-  yellow: "#facc15",
-  red: "#ef4444",
-  text: "#ffffff",
-  muted: "#9ca3af",
-};
-
+/* PASTE YOUR FULL FOOD_DB HERE */
 const FOOD_DB = {
   proteins: [
-    { name: "Chicken Breast", cal: 165 },
-    { name: "Lean Beef", cal: 190 },
-    { name: "Egg White", cal: 17 },
-    { name: "Tuna", cal: 200 },
-    { name: "Salmon", cal: 170 },
+    { name: "Boiled Chicken Skinless Breast", unit: "100 gms", cal: 155 },
   ],
-
   carbs: [
-    { name: "Rice", cal: 130 },
-    { name: "Oats", cal: 380 },
-    { name: "Banana", cal: 95 },
-    { name: "Sweet Potato", cal: 90 },
-    { name: "Bread", cal: 75 },
+    { name: "Boiled Rice", unit: "100 gms", cal: 130 },
   ],
-
   fats: [
-    { name: "Olive Oil", cal: 45 },
-    { name: "Peanut Butter", cal: 600 },
-    { name: "Avocado", cal: 180 },
-    { name: "Almonds", cal: 580 },
-    { name: "Cheddar Cheese", cal: 400 },
+    { name: "Olive Oil", unit: "teaspoon", cal: 45 },
   ],
 };
 
-function Progress({ value, max, color }) {
-  const percent = Math.min((value / max) * 100, 100);
+export default function FoodTracker() {
+  const [profiles, setProfiles] = useState(() => {
+    return JSON.parse(localStorage.getItem("profiles")) || [];
+  });
 
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: 10,
-        background: "#222",
-        borderRadius: 999,
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          width: `${percent}%`,
-          height: "100%",
-          background: color,
-          transition: "0.3s",
-        }}
-      />
-    </div>
-  );
-}
+  const [currentProfile, setCurrentProfile] = useState("");
+  const [email, setEmail] = useState("");
 
-function FoodSection({
-  title,
-  foods,
-  items,
-  setItems,
-  color,
-}) {
-  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("proteins");
+  const [selectedFood, setSelectedFood] = useState("");
+  const [grams, setGrams] = useState(100);
 
-  const filtered = foods.filter((f) =>
-    f.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const [foods, setFoods] = useState(() => {
+    return JSON.parse(localStorage.getItem("foods")) || [];
+  });
 
-  const addFood = (food) => {
-    setItems([
-      ...items,
-      {
-        name: food.name,
-        cal: food.cal,
-      },
-    ]);
+  useEffect(() => {
+    localStorage.setItem("foods", JSON.stringify(foods));
+  }, [foods]);
+
+  useEffect(() => {
+    localStorage.setItem("profiles", JSON.stringify(profiles));
+  }, [profiles]);
+
+  const addProfile = () => {
+    if (!currentProfile) return;
+
+    const newProfile = {
+      name: currentProfile,
+      email,
+    };
+
+    setProfiles([...profiles, newProfile]);
+
+    setCurrentProfile("");
+    setEmail("");
   };
 
+  const addFood = () => {
+    if (!selectedFood) return;
+
+    const food = FOOD_DB[selectedCategory].find(
+      (f) => f.name === selectedFood
+    );
+
+    if (!food) return;
+
+    let calories = food.cal;
+
+    if (food.unit.includes("100")) {
+      calories = Math.round((food.cal / 100) * grams);
+    }
+
+    const newFood = {
+      name: food.name,
+      grams,
+      calories,
+      unit: food.unit,
+    };
+
+    setFoods([...foods, newFood]);
+  };
+
+  const totalCalories = foods.reduce((sum, item) => sum + item.calories, 0);
+
   return (
-    <div
-      className="card"
-      style={{
-        padding: 18,
-        marginBottom: 18,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 20,
-          fontWeight: 800,
-          marginBottom: 16,
-          color,
-        }}
-      >
-        {title}
-      </div>
+    <div className="app">
+      <div className="title">Calories Calculator</div>
 
-      <input
-        placeholder="Search food..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={inputStyle}
-      />
+      <div className="card">
+        <div className="section-title">Profiles</div>
 
-      <div
-        style={{
-          marginTop: 14,
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-        }}
-      >
-        {filtered.map((food, index) => (
-          <div
-            key={index}
-            style={{
-              background: "#111",
-              borderRadius: 14,
-              padding: 14,
-              border: `1px solid ${COLORS.border}`,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontWeight: 700,
-                  marginBottom: 4,
-                }}
-              >
-                {food.name}
-              </div>
+        <input
+          placeholder="Name"
+          value={currentProfile}
+          onChange={(e) => setCurrentProfile(e.target.value)}
+        />
 
-              <div
-                style={{
-                  color: COLORS.muted,
-                  fontSize: 13,
-                }}
-              >
-                {food.cal} calories
-              </div>
-            </div>
+        <input
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-            <button
-              onClick={() => addFood(food)}
-              style={{
-                background: color,
-                border: "none",
-                borderRadius: 12,
-                padding: "10px 14px",
-                color: "#fff",
-                fontWeight: 700,
-              }}
-            >
-              Add
-            </button>
+        <button onClick={addProfile}>Add Profile</button>
+
+        {profiles.map((p, i) => (
+          <div key={i} className="food-item">
+            <div>{p.name}</div>
+            <div className="small">{p.email}</div>
           </div>
         ))}
       </div>
 
-      {items.length > 0 && (
-        <div
-          style={{
-            marginTop: 20,
+      <div className="card">
+        <div className="section-title">Total Calories</div>
+        <div className="total">{totalCalories}</div>
+      </div>
+
+      <div className="card">
+        <div className="section-title">Add Food</div>
+
+        <select
+          value={selectedCategory}
+          onChange={(e) => {
+            setSelectedCategory(e.target.value);
+            setSelectedFood("");
           }}
         >
-          <div
-            style={{
-              fontWeight: 800,
-              marginBottom: 12,
-            }}
-          >
-            Added Foods
-          </div>
+          <option value="proteins">Proteins</option>
+          <option value="carbs">Carbs</option>
+          <option value="fats">Fats</option>
+        </select>
 
-          {items.map((item, index) => (
-            <div
-              key={index}
-              style={{
-                background: "#0f0f0f",
-                padding: 12,
-                borderRadius: 12,
-                marginBottom: 10,
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
-              <span>{item.name}</span>
+        <select
+          value={selectedFood}
+          onChange={(e) => setSelectedFood(e.target.value)}
+        >
+          <option value="">Select Food</option>
 
-              <span
-                style={{
-                  color,
-                  fontWeight: 700,
-                }}
-              >
-                {item.cal} cal
-              </span>
-            </div>
+          {FOOD_DB[selectedCategory].map((food, i) => (
+            <option key={i} value={food.name}>
+              {food.name} — {food.cal} cal ({food.unit})
+            </option>
           ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function LoginScreen({ onLogin }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-
-  const createProfile = () => {
-    if (!name || !email) return;
-
-    const profiles =
-      JSON.parse(localStorage.getItem("profiles")) || [];
-
-    const existing = profiles.find(
-      (p) => p.email === email
-    );
-
-    if (existing) {
-      onLogin(existing);
-      return;
-    }
-
-    const profile = {
-      id: Date.now(),
-      name,
-      email,
-    };
-
-    profiles.push(profile);
-
-    localStorage.setItem(
-      "profiles",
-      JSON.stringify(profiles)
-    );
-
-    onLogin(profile);
-  };
-
-  return (
-    <div
-      className="app-container"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
-      }}
-    >
-      <div
-        className="card"
-        style={{
-          width: "100%",
-          padding: 24,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 34,
-            fontWeight: 900,
-            color: COLORS.green,
-            marginBottom: 10,
-          }}
-        >
-          Calories Tracker
-        </div>
-
-        <div
-          style={{
-            color: COLORS.muted,
-            marginBottom: 24,
-          }}
-        >
-          Create profile or continue with email
-        </div>
+        </select>
 
         <input
-          placeholder="Your Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          style={inputStyle}
+          type="number"
+          placeholder="Grams"
+          value={grams}
+          onChange={(e) => setGrams(e.target.value)}
         />
 
-        <input
-          placeholder="Email Address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{
-            ...inputStyle,
-            marginTop: 14,
-          }}
-        />
-
-        <button
-          onClick={createProfile}
-          style={{
-            width: "100%",
-            marginTop: 18,
-            background: COLORS.green,
-            border: "none",
-            borderRadius: 14,
-            padding: 16,
-            color: "#fff",
-            fontWeight: 800,
-            fontSize: 16,
-          }}
-        >
-          Continue
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function MacroCard({ title, value, goal, color }) {
-  return (
-    <div
-      className="card"
-      style={{
-        flex: 1,
-        padding: 16,
-      }}
-    >
-      <div
-        style={{
-          color,
-          fontWeight: 700,
-          marginBottom: 10,
-          fontSize: 13,
-        }}
-      >
-        {title}
+        <button onClick={addFood}>Add Food</button>
       </div>
 
-      <div
-        style={{
-          fontSize: 28,
-          fontWeight: 900,
-          marginBottom: 10,
-        }}
-      >
-        {value}
-      </div>
+      <div className="card">
+        <div className="section-title">Food List</div>
 
-      <Progress value={value} max={goal} color={color} />
-    </div>
-  );
-}
+        {foods.map((food, i) => (
+          <div key={i} className="food-item">
+            <div>{food.name}</div>
 
-const inputStyle = {
-  width: "100%",
-  background: "#111",
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: 14,
-  padding: 14,
-  color: "#fff",
-  fontSize: 15,
-};
-
-export default function FoodTracker() {
-  const [profile, setProfile] = useState(null);
-
-  const [proteins, setProteins] = useState([]);
-  const [carbs, setCarbs] = useState([]);
-  const [fats, setFats] = useState([]);
-
-  // LOAD CURRENT USER
-  useEffect(() => {
-    const current = localStorage.getItem(
-      "current-profile"
-    );
-
-    if (current) {
-      setProfile(JSON.parse(current));
-    }
-  }, []);
-
-  // LOAD USER DATA
-  useEffect(() => {
-    if (!profile) return;
-
-    const saved = localStorage.getItem(
-      `food-data-${profile.email}`
-    );
-
-    if (saved) {
-      const data = JSON.parse(saved);
-
-      setProteins(data.proteins || []);
-      setCarbs(data.carbs || []);
-      setFats(data.fats || []);
-    }
-  }, [profile]);
-
-  // SAVE USER DATA
-  useEffect(() => {
-    if (!profile) return;
-
-    localStorage.setItem(
-      `food-data-${profile.email}`,
-      JSON.stringify({
-        proteins,
-        carbs,
-        fats,
-      })
-    );
-
-    localStorage.setItem(
-      "current-profile",
-      JSON.stringify(profile)
-    );
-  }, [proteins, carbs, fats, profile]);
-
-  if (!profile) {
-    return (
-      <LoginScreen
-        onLogin={(p) => {
-          setProfile(p);
-        }}
-      />
-    );
-  }
-
-  const proteinCalories = proteins.reduce(
-    (s, i) => s + i.cal,
-    0
-  );
-
-  const carbsCalories = carbs.reduce(
-    (s, i) => s + i.cal,
-    0
-  );
-
-  const fatsCalories = fats.reduce(
-    (s, i) => s + i.cal,
-    0
-  );
-
-  const totalCalories =
-    proteinCalories +
-    carbsCalories +
-    fatsCalories;
-
-  return (
-    <div className="app-container safe-area">
-      <div
-        style={{
-          padding: "50px 16px 120px",
-        }}
-      >
-        <div
-          style={{
-            marginBottom: 26,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontSize: 34,
-                  fontWeight: 900,
-                  color: COLORS.green,
-                }}
-              >
-                Calories Tracker
-              </div>
-
-              <div
-                style={{
-                  color: COLORS.muted,
-                  marginTop: 6,
-                }}
-              >
-                Welcome {profile.name}
-              </div>
+            <div className="small">
+              {food.grams} gms • {food.calories} calories
             </div>
 
             <button
-              onClick={() => {
-                localStorage.removeItem(
-                  "current-profile"
-                );
-
-                window.location.reload();
-              }}
-              style={{
-                background: COLORS.red,
-                border: "none",
-                color: "#fff",
-                padding: "10px 14px",
-                borderRadius: 12,
-                fontWeight: 700,
-              }}
+              className="delete"
+              onClick={() =>
+                setFoods(foods.filter((_, index) => index !== i))
+              }
             >
-              Logout
+              Delete
             </button>
           </div>
-        </div>
-
-        <div
-          className="card"
-          style={{
-            padding: 24,
-            marginBottom: 20,
-            background:
-              "linear-gradient(135deg,#6abe30,#4f8f22)",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 14,
-              color: "rgba(255,255,255,0.8)",
-              marginBottom: 8,
-              fontWeight: 700,
-            }}
-          >
-            TOTAL CALORIES
-          </div>
-
-          <div
-            style={{
-              fontSize: 54,
-              fontWeight: 900,
-              color: "#fff",
-            }}
-          >
-            {totalCalories}
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            marginBottom: 20,
-          }}
-        >
-          <MacroCard
-            title="Protein"
-            value={proteinCalories}
-            goal={600}
-            color={COLORS.blue}
-          />
-
-          <MacroCard
-            title="Carbs"
-            value={carbsCalories}
-            goal={1000}
-            color={COLORS.green}
-          />
-
-          <MacroCard
-            title="Fats"
-            value={fatsCalories}
-            goal={500}
-            color={COLORS.yellow}
-          />
-        </div>
-
-        <FoodSection
-          title="Proteins"
-          foods={FOOD_DB.proteins}
-          items={proteins}
-          setItems={setProteins}
-          color={COLORS.blue}
-        />
-
-        <FoodSection
-          title="Carbs"
-          foods={FOOD_DB.carbs}
-          items={carbs}
-          setItems={setCarbs}
-          color={COLORS.green}
-        />
-
-        <FoodSection
-          title="Fats"
-          foods={FOOD_DB.fats}
-          items={fats}
-          setItems={setFats}
-          color={COLORS.yellow}
-        />
+        ))}
       </div>
     </div>
   );
